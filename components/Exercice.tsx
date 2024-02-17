@@ -1,42 +1,78 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import AudioElement from './AudioElement';
 import { Button } from './ui/button';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { cn } from '@/lib/utils';
-import { log } from 'console';
+
+const PATHS = [
+  {
+    questionNumber: 1,
+    paths: ['questions/1/Snare_1.wav', 'questions/1/Snare_2.wav'],
+    answerPath: 'questions/1/Snare_1.wav',
+  },
+  {
+    questionNumber: 2,
+    paths: [
+      'questions/2/Kick 909.wav',
+      'questions/2/Kick Airbase1.wav',
+      'questions/2/Kick AmonTobin 1.wav',
+    ],
+    answerPath: 'questions/2/Kick AmonTobin 1.wav',
+  },
+  {
+    questionNumber: 3,
+    paths: [
+      'questions/3/ClosedHH 808.wav',
+      'questions/3/ClosedHH Kingsto 1.wav',
+      'questions/3/ClosedHH Licorice 2.wav',
+    ],
+    answerPath: 'questions/3/ClosedHH Kingsto 1.wav',
+  },
+] as const;
 
 export default function Exercice() {
-  const responsePath = 'Snare_1.wav';
-  const paths = ['Snare_1.wav', 'Snare_2.wav'];
   const [answer, setAnswer] = useState('');
   const [hasBeenAnswered, setHasBeenAnswered] = useState(false);
+  const [questionNumber, setQuestionNumber] = useState(1);
+  const currentQuestion = PATHS[questionNumber - 1];
 
   function handleSubmit() {
     setHasBeenAnswered(true);
-    if (answer === responsePath) {
+    if (answer === currentQuestion.answerPath) {
       return;
     }
+  }
+
+  function handleNextQuestion() {
+    setQuestionNumber((prev) => prev + 1);
+    setAnswer('');
+    setHasBeenAnswered(false);
   }
 
   return (
     <div className='flex w-full flex-col items-center gap-8'>
       Listen to this sound:
-      <AudioElement path={responsePath} />
+      <AudioElement path={currentQuestion.answerPath} />
       Can you recognize it ?
       <div className='flex flex-col items-center gap-2'>
         <RadioGroup onValueChange={(e) => setAnswer(e)}>
-          {paths.map((pathName, i) => (
+          {currentQuestion.paths.map((pathName) => (
             <div className='flex items-center gap-2' key={pathName}>
               <AudioElement
                 path={pathName}
-                index={i}
-                isRightAnswer={hasBeenAnswered && pathName === responsePath}
+                isRightAnswer={
+                  hasBeenAnswered && pathName === currentQuestion.answerPath
+                }
+                isWrongAnswer={
+                  hasBeenAnswered && pathName !== currentQuestion.answerPath
+                }
               />
               <RadioGroupItem
                 value={pathName}
                 id={pathName}
                 disabled={hasBeenAnswered}
+                onChange={() => setAnswer(pathName)}
+                checked={answer === pathName}
               />
             </div>
           ))}
@@ -48,6 +84,15 @@ export default function Exercice() {
         disabled={hasBeenAnswered || answer === ''}
       >
         Submit
+      </Button>
+      <div>
+        Question {questionNumber} / {PATHS.length}
+      </div>
+      <Button
+        disabled={!hasBeenAnswered || questionNumber === PATHS.length}
+        onClick={handleNextQuestion}
+      >
+        Next question
       </Button>
     </div>
   );
